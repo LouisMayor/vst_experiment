@@ -16,7 +16,6 @@ I've opted use a system to work with my AI assistant, which I think is a little 
 This system, can but currently doesn't, use Github issues & project features
 
 ### How does it work?
-
 I create a requirements file, which can be a new file per set of requirements. At the time of writing, it is just one file. This contains a high level description of what I want to add.
 
 see `project_management/requirements/startup_requirements.md`
@@ -41,3 +40,10 @@ see `project_management/tracking/done/*.md`
 *I think using Github to manage this would work better*
 
 I have a custom skill for this. see `.claude/skills/work-on/SKILL.md`
+
+## What can we build?
+Firstly, **currently** we can only build on MacOS, but remember VST3 is supported on Windows, and Linux?
+
+The first VST we can build is `gain-vst3`, which allows us to reduce the volume of an incoming signal!
+
+see `src/plugin/source/processor.cpp`
