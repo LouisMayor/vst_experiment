@@ -1,3 +1,7 @@
+# Rules
+- `.claude/rules/cpp_code_style.md`
+- `.claude/rules/code_design.md`
+
 # Workflow
 - if you need a dependency to be installed, always ask for permission first.
   - use `gh` or `git` to get dependencies from github
@@ -5,59 +9,6 @@
 
 # Project navigation
 - use the `codebase-memory` mcp to navigate code files, and search for code, etc...
-
-# Code Design/Patterns
-- use C++23
-- use data oriented design patterns as much as possible.
-- simplicity: write simple, straightforward code
-- readability: make code easy to understand
-- performance: consider performance without sacrificing readability
-- maintainability: write code that's easy to update
-- testability: ensure code is testable
-- reusability: create reusable components and functions
-- less Code = less Debt: minimize code footprint
-
-# Programming best practices
-- use early returns
-- use DRY principles
-- use immumtability by default
-- do not leave magic numbers, use constants
-- balance file organization with simplicity - use an appropriate number of files for the project scale
-- keep core logic clean and push implementation details to the edges
-
-# Code Style (C++)
-- use snake_case
-  - functions, variables, etc...
-- use tab indentation
-- function inputs should be prefixed with `in_`
-  ```cpp
-  void foo(int in_x) {
-      ...
-  }
-  
-  void bar(const std::string& in_str) {
-      ...
-  }
-  ```
-- function inputs that are non-const references should be prefixed with `out_`
-  ```cpp
-  void foo(int& out_x) {
-      out_x = 5;
-  }
-  ```
-- try to keep alignment with other variables
-  ```cpp
-  int           x     = 1;
-  std::string   xyz   = 2;
-  ```
-- use smart pointers
-  - never use dumb pointers
-- braces should open on the same line
-  ```cpp
-  int get_random() {
-      return 42;
-  }
-  ```
 
 # Build system
 - we are using CMAKE 4.3
