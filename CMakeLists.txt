@@ -26,27 +26,4 @@ smtg_enable_vst3_sdk()
 
 set(SMTG_RUN_VST_VALIDATOR OFF)
 
-smtg_add_vst3plugin(gain-vst3
-    src/plugin/source/cids.h
-    src/plugin/source/controller.cpp
-    src/plugin/source/entry.cpp
-    src/plugin/source/pids.h
-    src/plugin/source/processor.cpp
-)
-
-target_compile_features(gain-vst3 PRIVATE cxx_std_23)
-
-target_link_libraries(gain-vst3 PRIVATE sdk)
-
-smtg_target_configure_version_file(gain-vst3)
-
-if(APPLE)
-    smtg_target_set_bundle(gain-vst3
-        BUNDLE_IDENTIFIER com.louismayor.vst3.gain
-        COMPANY_NAME "Louismayor"
-    )
-    smtg_target_set_debug_executable(gain-vst3
-        "/Applications/VST3PluginTestHost.app"
-        "--pluginfolder;$(BUILT_PRODUCTS_DIR)"
-    )
-endif()
+add_subdirectory(src/gain-plugin)
