@@ -3,9 +3,12 @@ paths:
   - "src/**/*.{h,cpp}"
 ---
 
-# C++ Code Style 
+Do not apply the following code style to third party library code.
+
+# C++ Code Style
+- do not use `using namespace ...`
+- always use fully qualified namespaces
 - use snake_case
-  - functions, variables, etc...
 - use tab indentation
 - function inputs should be prefixed with `in_`
   ```cpp
@@ -30,7 +33,7 @@ paths:
   ```
 - use smart pointers
   - never use dumb pointers
-- braces should open on the same line
+- use "K&R" brace style
   ```cpp
   int get_random() {
       return 42;
