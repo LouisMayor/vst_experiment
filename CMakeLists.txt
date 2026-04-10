@@ -27,3 +27,4 @@ smtg_enable_vst3_sdk()
 set(SMTG_RUN_VST_VALIDATOR OFF)
 
 add_subdirectory(src/gain-plugin)
+add_subdirectory(src/sin-tone-plugin)
