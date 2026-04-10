@@ -1,6 +1,6 @@
 ##########################################################################################
 cmake_minimum_required(VERSION 3.12)
-project(vst3_project_generator)
+project(vst3_project_generator LANGUAGES CXX OBJCXX)
 
 if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES Debug Release)
