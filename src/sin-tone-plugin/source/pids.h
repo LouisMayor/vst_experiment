@@ -2,6 +2,6 @@
 
 namespace Steinberg::Tutorial {
 enum parameter_id {
-	sin_tone = 1,
+	sin_freq_param = 1,
 };
 }
