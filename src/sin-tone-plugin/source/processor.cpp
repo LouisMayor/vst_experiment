@@ -2,6 +2,7 @@
 #include "cids.h"
 #include "pids.h"
 #include "pluginterfaces/base/ftypes.h"
+#include "pluginterfaces/vst/vsttypes.h"
 #include "public.sdk/source/vst/utility/audiobuffers.h"
 #include "public.sdk/source/vst/utility/processdataslicer.h"
 #include "public.sdk/source/vst/utility/rttransfer.h"
@@ -9,15 +10,22 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <array>
 #include <cassert>
+#include <cmath>
+#include <ios>
 #include <limits>
+#include <numbers>
 #include <set>
 #include <vector>
 
 namespace Steinberg::Tutorial {
 
+constexpr double MAX_FREQ	  = 1000.0;
+constexpr double DEFAULT_FREQ = 440.0;
+constexpr double DEFAULT_GAIN = 0.25;
+
 struct state_model {
-	double sin_freq = 440.0;
-	double gain		= 0.25;
+	double sin_freq;
+	double gain;
 };
 
 class sin_tone_processor : public Steinberg::Vst::AudioEffect {
@@ -35,16 +43,20 @@ class sin_tone_processor : public Steinberg::Vst::AudioEffect {
 	Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData &in_data) SMTG_OVERRIDE;
 	Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup &setup) SMTG_OVERRIDE;
 
-	void handle_parameter_changes(Steinberg::Vst::IParameterChanges *in_changes);
-	void update_phase_delta(Vst::SampleRate in_sample_rate);
+	void		  handle_parameter_changes(Steinberg::Vst::IParameterChanges *in_changes);
+	void		  on_sample_rate_changed(Vst::SampleRate in_sample_rate);
+	void		  update_phase_delta(Vst::Sample64 in_freq, Vst::SampleRate in_sample_rate);
+	Vst::Sample64 get_sine();
 
 	template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void process(Steinberg::Vst::ProcessData &in_data);
 
-	Steinberg::Vst::SampleAccurate::Parameter sin_freq_parameter{parameter_id::sin_freq_param, 1.};
+	Steinberg::Vst::SampleAccurate::Parameter sin_freq_parameter{parameter_id::sin_freq_param, DEFAULT_FREQ};
+	Steinberg::Vst::SampleAccurate::Parameter gain_parameter{parameter_id::gain_param, DEFAULT_GAIN};
 	rt_transfer								  state_transfer;
 
-	double current_phase = 0.0;
-	double delta_phase	 = 0.0; // freq / sample_rate
+	Vst::SampleRate current_sample_rate = 0.0;
+	double			current_phase		= 0.0;
+	double			delta_phase			= 0.0; // freq / sample_rate
 };
 
 sin_tone_processor::sin_tone_processor() {
@@ -54,8 +66,8 @@ sin_tone_processor::sin_tone_processor() {
 tresult PLUGIN_API sin_tone_processor::initialize(Steinberg::FUnknown *in_context) {
 	auto result = Steinberg::Vst::AudioEffect::initialize(in_context);
 	if (result == kResultTrue) {
-		addAudioInput(STR("Input"), Steinberg::Vst::SpeakerArr::kStereo);
 		addAudioOutput(STR("Output"), Steinberg::Vst::SpeakerArr::kStereo);
+		addEventInput(STR("Event In"), 1);
 	}
 	return result;
 }
@@ -81,7 +93,11 @@ tresult PLUGIN_API sin_tone_processor::setState(IBStream *in_state) {
 	if (!streamer.readDouble(value))
 		return kResultFalse;
 
-	model->sin_freq = value;
+	model->sin_freq = value * MAX_FREQ;
+
+	if (!streamer.readDouble(value))
+		return kResultFalse;
+	model->gain = value;
 
 	state_transfer.transferObject_ui(std::move(model));
 	return kResultTrue;
@@ -93,19 +109,17 @@ Steinberg::tresult PLUGIN_API sin_tone_processor::getState(Steinberg::IBStream *
 
 	IBStreamer streamer(in_state, kLittleEndian);
 	streamer.writeDouble(sin_freq_parameter.getValue());
+	streamer.writeDouble(gain_parameter.getValue());
 	return kResultTrue;
 }
 
 tresult PLUGIN_API sin_tone_processor::setBusArrangements(Steinberg::Vst::SpeakerArrangement *in_inputs, int32 in_num_ins,
 														  Steinberg::Vst::SpeakerArrangement *in_outputs, int32 in_num_outs) {
-	if (in_num_ins != 1 || in_num_outs != 1)
+	if (in_num_outs != 1)
 		return kResultFalse;
-	if (Steinberg::Vst::SpeakerArr::getChannelCount(in_inputs[0]) == Steinberg::Vst::SpeakerArr::getChannelCount(in_outputs[0])) {
-		getAudioInput(0)->setArrangement(in_inputs[0]);
-		getAudioOutput(0)->setArrangement(in_outputs[0]);
-		return kResultTrue;
-	}
-	return kResultFalse;
+
+	getAudioOutput(0)->setArrangement(in_outputs[0]);
+	return kResultTrue;
 }
 
 tresult PLUGIN_API sin_tone_processor::canProcessSampleSize(int32 in_symbolic_sample_size) {
@@ -119,16 +133,15 @@ template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void sin_tone_processo
 	Steinberg::Vst::ProcessDataSlicer slicer(8);
 
 	auto do_processing = [this](Steinberg::Vst::ProcessData &data) {
-		Steinberg::Vst::ParamValue sin_tone = sin_freq_parameter.advance(data.numSamples);
+		Steinberg::Vst::ParamValue sin_tone = sin_freq_parameter.advance(data.numSamples) * MAX_FREQ;
+		Steinberg::Vst::ParamValue gain		= gain_parameter.advance(data.numSamples);
+		update_phase_delta(sin_tone, current_sample_rate);
 
-		Steinberg::Vst::AudioBusBuffers *inputs	 = data.inputs;
 		Steinberg::Vst::AudioBusBuffers *outputs = data.outputs;
-		for (auto channel_index = 0; channel_index < inputs[0].numChannels; ++channel_index) {
-			auto input_buffers	= Steinberg::Vst::getChannelBuffers<SampleSize>(inputs[0])[channel_index];
+		for (auto channel_index = 0; channel_index < outputs[0].numChannels; ++channel_index) {
 			auto output_buffers = Steinberg::Vst::getChannelBuffers<SampleSize>(outputs[0])[channel_index];
 			for (auto sample_index = 0; sample_index < data.numSamples; ++sample_index) {
-				auto sample					 = input_buffers[sample_index];
-				output_buffers[sample_index] = sample * sin_tone;
+				output_buffers[sample_index] = get_sine() * gain;
 			}
 		}
 	};
@@ -145,13 +158,18 @@ void sin_tone_processor::handle_parameter_changes(Steinberg::Vst::IParameterChan
 			auto param_id = queue->getParameterId();
 			if (param_id == parameter_id::sin_freq_param) {
 				sin_freq_parameter.beginChanges(queue);
+			} else if (param_id == parameter_id::gain_param) {
+				gain_parameter.beginChanges(queue);
 			}
 		}
 	}
 }
 
 tresult PLUGIN_API sin_tone_processor::process(Steinberg::Vst::ProcessData &in_data) {
-	state_transfer.accessTransferObject_rt([this](const auto &state_model) { sin_freq_parameter.setValue(state_model.sin_freq); });
+	state_transfer.accessTransferObject_rt([this](const auto &state_model) {
+		sin_freq_parameter.setValue(state_model.sin_freq);
+		gain_parameter.setValue(state_model.gain);
+	});
 
 	handle_parameter_changes(in_data.inputParameterChanges);
 
@@ -161,16 +179,32 @@ tresult PLUGIN_API sin_tone_processor::process(Steinberg::Vst::ProcessData &in_d
 		process<Steinberg::Vst::SymbolicSampleSizes::kSample64>(in_data);
 
 	sin_freq_parameter.endChanges();
+	gain_parameter.endChanges();
 	return kResultTrue;
 }
 
 Steinberg::tresult PLUGIN_API sin_tone_processor::setupProcessing(Steinberg::Vst::ProcessSetup &setup) {
-	update_phase_delta(setup.sampleRate);
+	on_sample_rate_changed(setup.sampleRate);
 	return kResultTrue;
 }
 
-void sin_tone_processor::update_phase_delta(Vst::SampleRate in_sample_rate) {
-	delta_phase = sin_freq_parameter.getValue() / in_sample_rate;
+void sin_tone_processor::on_sample_rate_changed(Vst::SampleRate in_sample_rate) {
+	current_sample_rate = in_sample_rate;
+	update_phase_delta(sin_freq_parameter.getValue(), in_sample_rate);
+}
+
+void sin_tone_processor::update_phase_delta(Vst::Sample64 in_freq, Vst::SampleRate in_sample_rate) {
+	delta_phase = in_freq / in_sample_rate;
+}
+
+Vst::Sample64 sin_tone_processor::get_sine() {
+	const Vst::Sample64 tone = std::sin(std::numbers::pi * 2.0 * current_phase);
+	// update phase
+	current_phase += delta_phase;
+	// invert phase
+	if (current_phase >= 1.)
+		current_phase = -1.;
+	return tone;
 }
 
 FUnknown *create_processor_instance(void *in_ptr) {

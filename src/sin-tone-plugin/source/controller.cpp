@@ -4,6 +4,9 @@
 
 namespace Steinberg::Tutorial {
 
+constexpr double MAX_FREQ	  = 1000.0;
+constexpr double DEFAULT_GAIN = 0.25;
+
 class controller : public Steinberg::Vst::EditController {
   public:
 	tresult PLUGIN_API initialize(FUnknown *in_context) SMTG_OVERRIDE;
@@ -15,7 +18,8 @@ tresult PLUGIN_API controller::initialize(FUnknown *in_context) {
 	if (result != kResultOk) {
 		return result;
 	}
-	parameters.addParameter(STR("Sin Tone"), STR("%"), 0, 1., Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::sin_freq_param);
+	parameters.addParameter(STR("Sin Freq"), STR("Hz"), 0, 1., Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::sin_freq_param);
+	parameters.addParameter(STR("Gain"), STR("%"), 0, DEFAULT_GAIN, Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::gain_param);
 	return kResultOk;
 }
 
@@ -30,6 +34,9 @@ tresult PLUGIN_API controller::setComponentState(Steinberg::IBStream *state) {
 		return kResultFalse;
 
 	if (auto param = parameters.getParameter(parameter_id::sin_freq_param))
+		param->setNormalized(value);
+
+	if (auto param = parameters.getParameter(parameter_id::gain_param))
 		param->setNormalized(value);
 	return kResultTrue;
 }
