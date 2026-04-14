@@ -1,3 +1,7 @@
 .DS_Store
 .cache/
-build/
+build-sys-dbg/
+build-xcode/
+
+# generated through CMAKE debug build (build-sys-dbg) & sym-linked via `./build.sh`
+compile_commands.json
