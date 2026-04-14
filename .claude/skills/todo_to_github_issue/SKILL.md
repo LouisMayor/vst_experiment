@@ -23,7 +23,7 @@ Analyze and generate github issue(s): $ARGUMENTS.
     1. create a github issue
         1. you MUST use the todo comment content as the title
         2. you MUST assign the issue to @me 
-        3. you MUST contextualize the todo and use as the body (file name and line. optional: relevant function)
+        3. you MUST contextualize the todo and use as the body (format table: file name, line number, optional: relevant function, optional: directly connected comments)
         4. you MUST double check your markdown will display correctly
         5. cli doc: https://cli.github.com/manual/gh_issue_create
             ```
