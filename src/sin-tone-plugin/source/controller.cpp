@@ -1,4 +1,5 @@
 #include "base/source/fstreamer.h"
+#include "params/freq_param.h"
 #include "pids.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
@@ -18,7 +19,8 @@ tresult PLUGIN_API controller::initialize(FUnknown *in_context) {
 	if (result != kResultOk) {
 		return result;
 	}
-	parameters.addParameter(STR("Sin Freq"), STR("Hz"), 0, 1., Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::sin_freq_param);
+	// parameters.addParameter(STR("Sin Freq"), STR("Hz"), 0, 1., Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::sin_freq_param);
+	parameters.addParameter(new FrequencyParameter(STR("Sin Freq"), parameter_id::sin_freq_param));
 	parameters.addParameter(STR("Gain"), STR("%"), 0, DEFAULT_GAIN, Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::gain_param);
 	return kResultOk;
 }

@@ -4,6 +4,8 @@ smtg_add_vst3plugin(sin_tone-vst3
     source/entry.cpp
     source/pids.h
     source/processor.cpp
+    source/params/freq_param.h
+    source/params/freq_param.cpp
 )
 
 target_compile_features(sin_tone-vst3 PRIVATE cxx_std_23)

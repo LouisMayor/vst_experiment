@@ -1,5 +1,6 @@
 #include "base/source/fstreamer.h"
 #include "cids.h"
+#include "params/freq_param.h"
 #include "pids.h"
 #include "pluginterfaces/base/ftypes.h"
 #include "pluginterfaces/vst/vsttypes.h"
@@ -50,7 +51,7 @@ class sin_tone_processor : public Steinberg::Vst::AudioEffect {
 
 	template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void process(Steinberg::Vst::ProcessData &in_data);
 
-	Steinberg::Vst::SampleAccurate::Parameter sin_freq_parameter{parameter_id::sin_freq_param, DEFAULT_FREQ};
+	FrequencyParameter::DSP					  sin_freq_parameter{parameter_id::sin_freq_param};
 	Steinberg::Vst::SampleAccurate::Parameter gain_parameter{parameter_id::gain_param, DEFAULT_GAIN};
 	rt_transfer								  state_transfer;
 
@@ -92,7 +93,6 @@ tresult PLUGIN_API sin_tone_processor::setState(IBStream *in_state) {
 	Steinberg::Vst::ParamValue value;
 	if (!streamer.readDouble(value))
 		return kResultFalse;
-
 	model->sin_freq = value * MAX_FREQ;
 
 	if (!streamer.readDouble(value))
@@ -133,9 +133,9 @@ template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void sin_tone_processo
 	Steinberg::Vst::ProcessDataSlicer slicer(8);
 
 	auto do_processing = [this](Steinberg::Vst::ProcessData &data) {
-		Steinberg::Vst::ParamValue sin_tone = sin_freq_parameter.advance(data.numSamples) * MAX_FREQ;
+		Steinberg::Vst::ParamValue sin_tone = sin_freq_parameter.advance(data.numSamples);
 		Steinberg::Vst::ParamValue gain		= gain_parameter.advance(data.numSamples);
-		update_phase_delta(sin_tone, current_sample_rate);
+		update_phase_delta(sin_freq_parameter.get_freq(sin_tone), current_sample_rate);
 
 		Steinberg::Vst::AudioBusBuffers *outputs = data.outputs;
 		for (auto channel_index = 0; channel_index < outputs[0].numChannels; ++channel_index) {
