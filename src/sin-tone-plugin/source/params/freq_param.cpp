@@ -25,7 +25,11 @@ void FrequencyParameter::toString(Steinberg::Vst::ParamValue in_norm, Steinberg:
 	else
 		snprintf(text, sizeof(text), "%.0f Hz", hz);
 
-	Steinberg::UString(string, 128).fromAscii(text);
+	char norm_txt[32];
+	snprintf(norm_txt, sizeof(norm_txt), "%.2f", in_norm);
+
+	Steinberg::UString fmt_str = USTRING(text).append(USTRING(" | ").append(USTRING(norm_txt)));
+	Steinberg::UString(string, 128).append(fmt_str);
 }
 
 bool FrequencyParameter::fromString(const Steinberg::Vst::TChar *in_string, Steinberg::Vst::ParamValue &out_value_norm) const {

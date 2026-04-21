@@ -9,20 +9,15 @@
 #include "public.sdk/source/vst/utility/rttransfer.h"
 #include "public.sdk/source/vst/utility/sampleaccurate.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
-#include <array>
 #include <cassert>
 #include <cmath>
-#include <ios>
-#include <limits>
-#include <numbers>
-#include <set>
-#include <vector>
 
 namespace Steinberg::Tutorial {
 
-constexpr double MAX_FREQ	  = 1000.0;
-constexpr double DEFAULT_FREQ = 440.0;
-constexpr double DEFAULT_GAIN = 0.25;
+static constexpr double MAX_FREQ	 = 1000.0;
+static constexpr double DEFAULT_FREQ = 440.0;
+static constexpr double DEFAULT_GAIN = 0.25;
+static constexpr double T_PI		 = 2.0 * 3.141592653589793;
 
 struct state_model {
 	double sin_freq;
@@ -137,11 +132,12 @@ template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void sin_tone_processo
 		Steinberg::Vst::ParamValue gain		= gain_parameter.advance(data.numSamples);
 		update_phase_delta(sin_freq_parameter.get_freq(sin_tone), current_sample_rate);
 
-		Steinberg::Vst::AudioBusBuffers *outputs = data.outputs;
-		for (auto channel_index = 0; channel_index < outputs[0].numChannels; ++channel_index) {
-			auto output_buffers = Steinberg::Vst::getChannelBuffers<SampleSize>(outputs[0])[channel_index];
-			for (auto sample_index = 0; sample_index < data.numSamples; ++sample_index) {
-				output_buffers[sample_index] = get_sine() * gain;
+		Steinberg::Vst::AudioBusBuffers *outputs		 = data.outputs;
+		auto							 channel_buffers = Steinberg::Vst::getChannelBuffers<SampleSize>(outputs[0]);
+		for (auto sample_index = 0; sample_index < data.numSamples; ++sample_index) {
+			auto sample = get_sine() * gain;
+			for (auto channel_index = 0; channel_index < outputs[0].numChannels; ++channel_index) {
+				channel_buffers[channel_index][sample_index] = sample;
 			}
 		}
 	};
@@ -194,16 +190,16 @@ void sin_tone_processor::on_sample_rate_changed(Vst::SampleRate in_sample_rate) 
 }
 
 void sin_tone_processor::update_phase_delta(Vst::Sample64 in_freq, Vst::SampleRate in_sample_rate) {
-	delta_phase = in_freq / in_sample_rate;
+	delta_phase = T_PI * in_freq / in_sample_rate;
 }
 
 Vst::Sample64 sin_tone_processor::get_sine() {
-	const Vst::Sample64 tone = std::sin(std::numbers::pi * 2.0 * current_phase);
-	// update phase
+	const Vst::Sample64 tone = std::sin(current_phase);
 	current_phase += delta_phase;
+
 	// invert phase
-	if (current_phase >= 1.)
-		current_phase = -1.;
+	if (current_phase >= T_PI)
+		current_phase -= T_PI;
 	return tone;
 }
 
