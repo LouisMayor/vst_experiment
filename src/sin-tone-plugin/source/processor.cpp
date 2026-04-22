@@ -132,10 +132,19 @@ template <Steinberg::Vst::SymbolicSampleSizes SampleSize> void sin_tone_processo
 		Steinberg::Vst::ParamValue gain		= gain_parameter.advance(data.numSamples);
 		update_phase_delta(sin_freq_parameter.get_freq(sin_tone), current_sample_rate);
 
+		auto get_saw = [this](Vst::Sample64 in_freq) -> Vst::Sample64 {
+			auto delta_phase = in_freq / current_sample_rate;
+			current_phase += delta_phase;
+			if (current_phase >= 1.)
+				current_phase = -1.;
+			return (2.0 * (in_freq - floor(0.5 + in_freq)));
+		};
+
 		Steinberg::Vst::AudioBusBuffers *outputs		 = data.outputs;
 		auto							 channel_buffers = Steinberg::Vst::getChannelBuffers<SampleSize>(outputs[0]);
 		for (auto sample_index = 0; sample_index < data.numSamples; ++sample_index) {
 			auto sample = get_sine() * gain;
+			// auto sample = get_saw(current_phase) * gain;
 			for (auto channel_index = 0; channel_index < outputs[0].numChannels; ++channel_index) {
 				channel_buffers[channel_index][sample_index] = sample;
 			}
@@ -196,7 +205,6 @@ void sin_tone_processor::update_phase_delta(Vst::Sample64 in_freq, Vst::SampleRa
 Vst::Sample64 sin_tone_processor::get_sine() {
 	const Vst::Sample64 tone = std::sin(current_phase);
 	current_phase += delta_phase;
-
 	// invert phase
 	if (current_phase >= T_PI)
 		current_phase -= T_PI;
