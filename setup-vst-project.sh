@@ -119,6 +119,7 @@ cmake \
     -DSMTG_PLUGIN_IDENTIFIER_CLI="${plugin_identifier}" \
     -DSMTG_VENDOR_NAMESPACE_CLI="${vendor_namespace}" \
     -DSMTG_PLUGIN_CLASS_NAME_CLI="${plugin_class_name}" \
+    -DSMTG_VST3_SDK_SOURCE_DIR_CLI='${CMAKE_CURRENT_LIST_DIR}/../thirdparty/vst3sdk' \
     -DSMTG_GENERATOR_OUTPUT_DIRECTORY_CLI="${output_root}" \
     -P "${generator_script}"
 
