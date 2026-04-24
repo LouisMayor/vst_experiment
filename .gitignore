@@ -2,5 +2,5 @@
 .cache/
 build/
 
-# generated through CMAKE debug build (build-sys-dbg) & sym-linked via `./build.sh`
+# generated through CMake plugin builds via `./build.sh`
 compile_commands.json

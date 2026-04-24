@@ -1,3 +1,2 @@
-# ignore CMAKE builds
-build-sys-dbg/
-build-xcode/
+# ignore CMake builds
+build/
