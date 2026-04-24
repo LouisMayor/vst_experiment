@@ -2,6 +2,7 @@
 .cache/
 build-sys-dbg/
 build-xcode/
+build/
 
 # generated through CMAKE debug build (build-sys-dbg) & sym-linked via `./build.sh`
 compile_commands.json
