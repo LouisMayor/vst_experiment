@@ -61,7 +61,7 @@ class GainProcessor : public Steinberg::Vst::AudioEffect {
 	using gain_rt_transfer = Steinberg::Vst::RTTransferT<gain_param>;
 	gain_rt_transfer gain_rt;
 
-	Steinberg::Vst::SampleAccurate::Parameter gain_parameter{parameter_id::gain, 1.};
+	Steinberg::Vst::SampleAccurate::Parameter gain_parameter{GainVendor::gain_param.id, 1.};
 };
 
 //------------------------------------------------------------------------

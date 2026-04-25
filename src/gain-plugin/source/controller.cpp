@@ -24,7 +24,8 @@ tresult PLUGIN_API GainController::initialize(FUnknown *context) {
 	}
 
 	// Here you could register some parameters
-	parameters.addParameter(STR("Gain"), STR("%"), 0, 1., Steinberg::Vst::ParameterInfo::kCanAutomate, parameter_id::gain);
+	parameters.addParameter(GainVendor::gain_param.title, GainVendor::gain_param.units, GainVendor::gain_param.step_count,
+							GainVendor::gain_param.default_normalized_value, GainVendor::gain_param.flags, GainVendor::gain_param.id);
 
 	return result;
 }
@@ -49,7 +50,7 @@ tresult PLUGIN_API GainController::setComponentState(IBStream *state) {
 	if (!streamer.readDouble(value))
 		return kResultFalse;
 
-	if (auto param = parameters.getParameter(parameter_id::gain))
+	if (auto param = parameters.getParameter(GainVendor::gain_param.id))
 		param->setNormalized(value);
 	return kResultOk;
 }

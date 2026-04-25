@@ -179,7 +179,7 @@ void GainProcessor::handle_parameter_changes(Steinberg::Vst::IParameterChanges *
 	for (auto i = 0; i < change_count; ++i) {
 		if (auto queue = in_changes->getParameterData(i)) {
 			auto param_id = queue->getParameterId();
-			if (param_id == parameter_id::gain) {
+			if (param_id == GainVendor::gain_param.id) {
 				gain_parameter.beginChanges(queue);
 			}
 		}

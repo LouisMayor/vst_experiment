@@ -23,6 +23,8 @@ set(SMTG_VSTGUI_ROOT "${vst3sdk_SOURCE_DIR}")
 add_subdirectory(${vst3sdk_SOURCE_DIR} ${PROJECT_BINARY_DIR}/vst3sdk)
 smtg_enable_vst3_sdk()
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../common ${PROJECT_BINARY_DIR}/vst_common)
+
 smtg_add_vst3plugin(gain-vst3
     source/version.h
     source/cids.h
@@ -59,6 +61,7 @@ smtg_target_add_plugin_snapshots (gain-vst3
 target_link_libraries(gain-vst3
     PRIVATE
         sdk
+        vst_common
 )
 
 smtg_target_configure_version_file(gain-vst3)
