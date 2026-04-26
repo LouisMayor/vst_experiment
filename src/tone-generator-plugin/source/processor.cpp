@@ -64,8 +64,10 @@ tresult PLUGIN_API ToneGeneratorProcessor::setActive(TBool state) {
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API ToneGeneratorProcessor::process(Vst::ProcessData &data) {
-	freq_rt.accessTransferObject_rt([this](const auto &state_model) { freq_param.setValue(state_model.freq); });
-	handle_parameter_changes(data.inputParameterChanges);
+	freq_param.applyPendingTransfer();
+	vol_param.applyPendingTransfer();
+	waveform_param.applyPendingTransfer();
+	OnParameterChanges(data.inputParameterChanges);
 	//--- First : Read inputs parameter changes-----------
 
 	/*if (data.inputParameterChanges)
@@ -163,15 +165,15 @@ tresult PLUGIN_API ToneGeneratorProcessor::setState(IBStream *state) {
 	Steinberg::Vst::ParamValue waveform_value = VstCommon::WaveformModel::toNormalized(VstCommon::WaveformModel::kDefaultPlain);
 
 	if (streamer.readDouble(freq_value))
-		freq_param.setValue(freq_value);
+		freq_param.setStateValue(freq_value);
 
 	// Try to read volume (backward compatibility with old states that only had frequency)
 	if (streamer.readDouble(vol_value))
-		vol_param.setValue(vol_value);
+		vol_param.setStateValue(vol_value);
 
 	// Try to read waveform (backward compatibility with states that only had frequency + volume)
 	if (streamer.readDouble(waveform_value))
-		waveform_param.setValue(waveform_value);
+		waveform_param.setStateValue(waveform_value);
 
 	return kResultOk;
 }
@@ -187,7 +189,7 @@ tresult PLUGIN_API ToneGeneratorProcessor::getState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-void ToneGeneratorProcessor::handle_parameter_changes(Steinberg::Vst::IParameterChanges *in_changes) {
+void ToneGeneratorProcessor::OnParameterChanges(Steinberg::Vst::IParameterChanges *in_changes) {
 	if (!in_changes)
 		return;
 	int32 change_count = in_changes->getParameterCount();

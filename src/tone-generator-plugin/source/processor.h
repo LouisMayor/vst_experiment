@@ -5,7 +5,6 @@
 #pragma once
 
 #include "pluginterfaces/vst/vsttypes.h"
-#include "public.sdk/source/vst/utility/rttransfer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "vst_common/frequency_model.h"
 #include "vst_common/model_sample_accurate_parameter.h"
@@ -54,15 +53,8 @@ class ToneGeneratorProcessor : public Steinberg::Vst::AudioEffect {
 
 	//------------------------------------------------------------------------
   protected:
-	void handle_parameter_changes(Steinberg::Vst::IParameterChanges *in_changes);
+	void OnParameterChanges(Steinberg::Vst::IParameterChanges *in_changes);
 
-	// todo: move to src/common/include/vst_common/model_sample_accurate_parameter.h
-	struct RTTransfer_FreqModel {
-		Steinberg::Vst::Sample64 freq;
-	};
-	using freq_rt_transfer = Steinberg::Vst::RTTransferT<RTTransfer_FreqModel>;
-
-	freq_rt_transfer												   freq_rt;
 	VstCommon::ModelSampleAccurateParameter<VstCommon::FrequencyModel> freq_param;
 	VstCommon::ModelSampleAccurateParameter<VstCommon::VolumeModel>	   vol_param;
 	VstCommon::WaveformSampleAccurateParameter						   waveform_param;
