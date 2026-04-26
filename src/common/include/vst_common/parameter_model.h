@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pluginterfaces/vst/vsttypes.h"
-
 namespace VstCommon {
 
 /**
@@ -19,6 +17,9 @@ namespace VstCommon {
  *   - kMaxPlain            : Steinberg::Vst::ParamValue
  *   - kDefaultPlain        : Steinberg::Vst::ParamValue
  *   - kFlags               : Steinberg::int32
+ *
+ * Optional static members:
+ *   - kStepCount           : Steinberg::int32 (for discrete/list parameters)
  *
  * Required static methods:
  *   - toPlain(norm)        : Steinberg::Vst::ParamValue

@@ -1,8 +1,21 @@
 #pragma once
 
 #include "public.sdk/source/vst/vstparameters.h"
+#include <type_traits>
 
 namespace VstCommon {
+
+namespace detail {
+
+template <typename Model, typename = void> struct model_step_count {
+	static constexpr Steinberg::int32 value = 0;
+};
+
+template <typename Model> struct model_step_count<Model, std::void_t<decltype(Model::kStepCount)>> {
+	static constexpr Steinberg::int32 value = static_cast<Steinberg::int32>(Model::kStepCount);
+};
+
+} // namespace detail
 
 /**
  * Controller adapter: wraps Steinberg::Vst::RangeParameter for a given ParameterModel.
@@ -13,8 +26,8 @@ namespace VstCommon {
 template <typename Model> class ModelRangeParameter : public Steinberg::Vst::RangeParameter {
   public:
 	ModelRangeParameter()
-		: RangeParameter(Model::kTitle, Model::kId, Model::kUnits, Model::kMinPlain, Model::kMaxPlain, Model::kDefaultPlain, 0, Model::kFlags,
-						 Steinberg::Vst::kRootUnitId) {
+		: RangeParameter(Model::kTitle, Model::kId, Model::kUnits, Model::kMinPlain, Model::kMaxPlain, Model::kDefaultPlain,
+						 detail::model_step_count<Model>::value, Model::kFlags, Steinberg::Vst::kRootUnitId) {
 		auto defaultNorm			= Model::toNormalized(Model::kDefaultPlain);
 		info.defaultNormalizedValue = defaultNorm;
 		setNormalized(defaultNorm);
