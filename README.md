@@ -42,8 +42,20 @@ see `project_management/tracking/done/*.md`
 I have a custom skill for this. see `.claude/skills/work-on/SKILL.md`
 
 ## What can we build?
-Firstly, **currently** we can only build on MacOS, but remember VST3 is supported on Windows, and Linux?
-
 The first VST we can build is `gain-vst3`, which allows us to reduce the volume of an incoming signal!
 
 see `src/plugin/source/processor.cpp`
+
+### MacOS / Linux
+```sh
+./build.sh              # build all plugins under src/*-plugin
+./build.sh gain-plugin  # build a single plugin
+```
+
+### Windows
+Requires Visual Studio 2019+ (or Build Tools) with the *Desktop development with C++* workload — CMake and Ninja are picked up from the VS install automatically.
+```powershell
+.\build.ps1              # build all plugins under src/*-plugin
+.\build.ps1 gain-plugin  # build a single plugin
+```
+The post-build step symlinks the bundle into `%LOCALAPPDATA%\Programs\Common\VST3`, so DAWs scanning the default user location pick it up.
