@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vstgui-ui-description version="1">
+	<fonts>
+	</fonts>
+	<colors>
+		<color name="Background" rgba="#2d2d30ff"/>
+		<color name="Title Text" rgba="#ffcc00ff"/>
+		<color name="Body Text" rgba="#ccccccff"/>
+		<color name="Slider Back" rgba="#555555ff"/>
+		<color name="Slider Frame" rgba="#888888ff"/>
+		<color name="Slider Value" rgba="#ffcc00ff"/>
+		<color name="Slider Handle" rgba="#ffffffff"/>
+	</colors>
+	<template background-color="Background" background-color-draw-style="filled and stroked" class="CViewContainer" mouse-enabled="true" name="view" opacity="1" origin="0, 0" size="300, 200" transparent="false" wants-focus="false">
+		<view back-color="~ TransparentCColor" background-offset="0, 0" class="CTextLabel" default-value="0.5" font="~ NormalFontVeryBig" font-antialias="true" font-color="Title Text" frame-color="~ TransparentCColor" frame-width="1" max-value="1" min-value="0" mouse-enabled="false" opacity="1" origin="0, 20" size="300, 40" style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="false" style-shadow-text="false" text-alignment="center" text-inset="0, 0" text-rotation="0" title="Hello VSTGUI World!" transparent="true" value-precision="2" wheel-inc-value="0.1"/>
+		<view back-color="~ TransparentCColor" background-offset="0, 0" class="CTextLabel" default-value="0.5" font="~ NormalFont" font-antialias="true" font-color="Body Text" frame-color="~ TransparentCColor" frame-width="1" max-value="1" min-value="0" mouse-enabled="false" opacity="1" origin="0, 70" size="300, 20" style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="false" style-shadow-text="false" text-alignment="center" text-inset="0, 0" text-rotation="0" title="Drag the slider to change gain" transparent="true" value-precision="2" wheel-inc-value="0.1"/>
+		<view back-color="~ TransparentCColor" background-offset="0, 0" class="CTextLabel" default-value="0.5" font="~ NormalFont" font-antialias="true" font-color="Body Text" frame-color="~ TransparentCColor" frame-width="1" max-value="1" min-value="0" mouse-enabled="false" opacity="1" origin="20, 120" size="50, 24" style-3D-in="false" style-3D-out="false" style-no-draw="false" style-no-frame="false" style-no-text="false" style-round-rect="false" style-shadow-text="false" text-alignment="left" text-inset="0, 0" text-rotation="0" title="Gain:" transparent="true" value-precision="2" wheel-inc-value="0.1"/>
+		<view background-offset="0, 0" class="CSlider" control-tag="Gain" default-value="0.5" draw-back="true" draw-back-color="Slider Back" draw-frame="true" draw-frame-color="Slider Frame" draw-value="true" draw-value-color="Slider Value" draw-value-from-center="false" draw-value-inverted="false" handle-offset="0, 0" max-value="1" min-value="0" mode="free click" mouse-enabled="true" opacity="1" orientation="horizontal" origin="80, 120" reverse-orientation="false" size="180, 24" transparent="false" transparent-handle="true" wheel-inc-value="0.01" zoom-factor="10"/>
+	</template>
+	<custom>
+		<attributes name="FocusDrawing"/>
+		<attributes Path="editor.uidesc" name="VST3Editor"/>
+		<attributes Grids="1x 1,5x 5,10x 10,12x 12,15x 15" name="UIGridController"/>
+		<attributes SelectedTemplate="view" name="UITemplateController"/>
+		<attributes EditViewScale="1" EditorSize="0, 0, 500, 545" SplitViewSize_0_0="0.7495183044315992804129678006574977189302" SplitViewSize_0_1="0.2119460500963391003104163701209472492337" SplitViewSize_1_0="0.4797687861271676124097496085596503689885" SplitViewSize_1_1="0.5105973025048169411377330106915906071663" SplitViewSize_2_0="0.6400000000000000133226762955018784850836" SplitViewSize_2_1="0.3499999999999999777955395074968691915274" TabSwitchValue="0" Version="1" name="UIEditController"/>
+		<attributes name="UIAttributesController"/>
+		<attributes SelectedRow="7" name="UIViewCreatorDataSource"/>
+	</custom>
+	<bitmaps/>
+	<control-tags>
+		<control-tag name="Gain" tag="0"/>
+	</control-tags>
+	<gradients/>
+</vstgui-ui-description>
