@@ -2,7 +2,30 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-requested_plugin="${1:-}"
+requested_plugin=""
+requested_config="Release"
+
+if [[ $# -ge 1 ]]; then
+    arg1_lower="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$arg1_lower" == "debug" || "$arg1_lower" == "release" ]]; then
+        requested_config="$1"
+        if [[ $# -ge 2 ]]; then
+            requested_plugin="$2"
+        fi
+    else
+        requested_plugin="$1"
+        if [[ $# -ge 2 ]]; then
+            arg2_lower="$(echo "$2" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$arg2_lower" == "debug" || "$arg2_lower" == "release" ]]; then
+                requested_config="$2"
+            else
+                printf 'Invalid configuration: %s. Use "debug" or "release".\n' "$2" >&2
+                exit 1
+            fi
+        fi
+    fi
+fi
+
 build_generator="Unix Makefiles"
 compile_commands_inputs=()
 
@@ -61,31 +84,35 @@ resolve_plugin_target() {
 build_plugin() {
     local plugin_dir="$1"
     local plugin_target="$2"
+    local build_config="$3"
+    local config_lower="$(echo "$build_config" | tr '[:upper:]' '[:lower:]')"
     local plugin_source_dir="${script_dir}/src/${plugin_dir}"
     local standalone_build_root="${script_dir}/build"
-    local standalone_build_dbg="${standalone_build_root}/${plugin_dir}-dbg"
+    local standalone_build_dir="${standalone_build_root}/${plugin_dir}-${config_lower}"
     local standalone_build_xcode="${standalone_build_root}/${plugin_dir}-xcode"
-    local debug_config_args=(-DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+    local cmake_config_args=(-DCMAKE_BUILD_TYPE="${build_config}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
-    printf 'Building %s (target: %s)\n' "${plugin_dir}" "${plugin_target}"
+    printf 'Building %s (target: %s, config: %s)\n' "${plugin_dir}" "${plugin_target}" "${build_config}"
 
-    rm -rf "${standalone_build_dbg}" "${standalone_build_xcode}"
-
+    rm -rf "${standalone_build_dir}"
     if [[ "$(uname -s)" == "Darwin" ]]; then
-        debug_config_args+=("-DCMAKE_OBJCXX_COMPILE_OBJECT=<CMAKE_OBJCXX_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -c <SOURCE>")
+        rm -rf "${standalone_build_xcode}"
     fi
 
-    cmake -S "${plugin_source_dir}" -B "${standalone_build_dbg}" -G "${build_generator}" "${debug_config_args[@]}"
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        cmake_config_args+=("-DCMAKE_OBJCXX_COMPILE_OBJECT=<CMAKE_OBJCXX_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -c <SOURCE>")
+    fi
+
+    cmake -S "${plugin_source_dir}" -B "${standalone_build_dir}" -G "${build_generator}" "${cmake_config_args[@]}"
 
     if [[ "$(uname -s)" == "Darwin" ]]; then
         cmake -S "${plugin_source_dir}" -B "${standalone_build_xcode}" -G Xcode
-        cmake --build "${standalone_build_xcode}" --config Debug --target "${plugin_target}"
-        cmake --build "${standalone_build_xcode}" --config Release --target "${plugin_target}"
+        cmake --build "${standalone_build_xcode}" --config "${build_config}" --target "${plugin_target}"
     else
-        cmake --build "${standalone_build_dbg}"
+        cmake --build "${standalone_build_dir}"
     fi
 
-    compile_commands_inputs+=("${standalone_build_dbg}/compile_commands.json")
+    compile_commands_inputs+=("${standalone_build_dir}/compile_commands.json")
 }
 
 write_compile_commands_file() {
@@ -143,14 +170,15 @@ PY
 if [[ -n "${requested_plugin}" ]]; then
     plugin_source_dir="$(resolve_plugin_dir "${requested_plugin}")"
     if [[ -z "${plugin_source_dir}" ]]; then
-        printf 'Usage: %s [plugin-dir-or-target]\n' "$(basename "$0")" >&2
+        printf 'Usage: %s [plugin-dir-or-target] [debug|release]\n' "$(basename "$0")" >&2
         printf 'Example: %s gain-plugin\n' "$(basename "$0")" >&2
+        printf 'Example: %s gain-plugin debug\n' "$(basename "$0")" >&2
         printf 'If no plugin is provided, all plugins in src/*-plugin are built.\n' >&2
         exit 1
     fi
 
     plugin_target="$(resolve_plugin_target "${requested_plugin}")"
-    build_plugin "${plugin_source_dir}" "${plugin_target}"
+    build_plugin "${plugin_source_dir}" "${plugin_target}" "${requested_config}"
     write_compile_commands_file
     exit 0
 fi
@@ -167,7 +195,7 @@ fi
 for plugin_cmake_file in "${plugin_cmake_files[@]}"; do
     plugin_dir="$(basename "$(dirname "${plugin_cmake_file}")")"
     plugin_target="$(resolve_plugin_target "${plugin_dir}")"
-    build_plugin "${plugin_dir}" "${plugin_target}"
+    build_plugin "${plugin_dir}" "${plugin_target}" "${requested_config}"
 done
 
 write_compile_commands_file

@@ -1,8 +1,30 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [string]$Plugin
+    [string]$Arg1 = $null,
+
+    [Parameter(Position = 1)]
+    [string]$Arg2 = $null
 )
+
+$plugin = $null
+$config = 'Release'
+
+function Set-ConfigOrPlugin($value) {
+    $lower = $value.ToLowerInvariant()
+    if ($lower -eq 'debug' -or $lower -eq 'release') {
+        $script:config = $value
+    } else {
+        if ($script:plugin) {
+            Write-Error "Unexpected argument: $value. Usage: build.ps1 [plugin-dir-or-target] [debug|release]"
+            exit 1
+        }
+        $script:plugin = $value
+    }
+}
+
+if ($Arg1) { Set-ConfigOrPlugin $Arg1 }
+if ($Arg2) { Set-ConfigOrPlugin $Arg2 }
 
 $ErrorActionPreference = 'Stop'
 
@@ -73,36 +95,28 @@ function Resolve-PluginTarget {
 function Build-Plugin {
     param(
         [string]$PluginDir,
-        [string]$PluginTarget
+        [string]$PluginTarget,
+        [string]$BuildConfig
     )
 
     $sourceDir = Join-Path $scriptDir "src\$PluginDir"
-    $debugDir = Join-Path $buildRoot "$PluginDir-dbg"
-    $releaseDir = Join-Path $buildRoot "$PluginDir-rel"
+    $configLower = $BuildConfig.ToLowerInvariant()
+    $buildDir = Join-Path $buildRoot "$PluginDir-$configLower"
 
-    Write-Host "Building $PluginDir (target: $PluginTarget)"
+    Write-Host "Building $PluginDir (target: $PluginTarget, config: $BuildConfig)"
 
-    if (Test-Path $debugDir) { Remove-Item $debugDir -Recurse -Force }
-    if (Test-Path $releaseDir) { Remove-Item $releaseDir -Recurse -Force }
+    if (Test-Path $buildDir) { Remove-Item $buildDir -Recurse -Force }
 
-    cmake -S $sourceDir -B $debugDir -G Ninja `
-        -DCMAKE_BUILD_TYPE=Debug `
+    cmake -S $sourceDir -B $buildDir -G Ninja `
+        -DCMAKE_BUILD_TYPE=$BuildConfig `
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
         -DSMTG_CXX_STANDARD=23
-    if ($LASTEXITCODE -ne 0) { throw "CMake Debug configure failed for $PluginDir" }
+    if ($LASTEXITCODE -ne 0) { throw "CMake $BuildConfig configure failed for $PluginDir" }
 
-    cmake --build $debugDir --target $PluginTarget
-    if ($LASTEXITCODE -ne 0) { throw "Debug build failed for $PluginDir" }
+    cmake --build $buildDir --target $PluginTarget
+    if ($LASTEXITCODE -ne 0) { throw "$BuildConfig build failed for $PluginDir" }
 
-    cmake -S $sourceDir -B $releaseDir -G Ninja `
-        -DCMAKE_BUILD_TYPE=Release `
-        -DSMTG_CXX_STANDARD=23
-    if ($LASTEXITCODE -ne 0) { throw "CMake Release configure failed for $PluginDir" }
-
-    cmake --build $releaseDir --target $PluginTarget
-    if ($LASTEXITCODE -ne 0) { throw "Release build failed for $PluginDir" }
-
-    $compileCommandsInputs.Add((Join-Path $debugDir 'compile_commands.json'))
+    $compileCommandsInputs.Add((Join-Path $buildDir 'compile_commands.json'))
 }
 
 function Write-CompileCommands {
@@ -131,14 +145,14 @@ function Write-CompileCommands {
 
 Enter-VsEnv
 
-if ($Plugin) {
-    $pluginDir = Resolve-PluginDir $Plugin
+if ($plugin) {
+    $pluginDir = Resolve-PluginDir $plugin
     if (-not $pluginDir) {
-        Write-Error "Usage: ./build.ps1 [plugin-dir-or-target]`nExample: ./build.ps1 gain-plugin`nIf no plugin is provided, all plugins in src/*-plugin are built."
+        Write-Error "Usage: ./build.ps1 [plugin-dir-or-target] [debug|release]`nExample: ./build.ps1 gain-plugin`nExample: ./build.ps1 gain-plugin debug`nIf no plugin is provided, all plugins in src/*-plugin are built."
         exit 1
     }
-    $pluginTarget = Resolve-PluginTarget $Plugin
-    Build-Plugin -PluginDir $pluginDir -PluginTarget $pluginTarget
+    $pluginTarget = Resolve-PluginTarget $plugin
+    Build-Plugin -PluginDir $pluginDir -PluginTarget $pluginTarget -BuildConfig $config
     Write-CompileCommands
     exit 0
 }
@@ -155,7 +169,7 @@ if (-not $pluginCmakeFiles) {
 foreach ($cmakeFile in $pluginCmakeFiles) {
     $pluginDir = Split-Path -Leaf (Split-Path -Parent $cmakeFile)
     $pluginTarget = Resolve-PluginTarget $pluginDir
-    Build-Plugin -PluginDir $pluginDir -PluginTarget $pluginTarget
+    Build-Plugin -PluginDir $pluginDir -PluginTarget $pluginTarget -BuildConfig $config
 }
 
 Write-CompileCommands

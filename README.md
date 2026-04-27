@@ -48,14 +48,18 @@ see `src/plugin/source/processor.cpp`
 
 ### MacOS / Linux
 ```sh
-./build.sh              # build all plugins under src/*-plugin
-./build.sh gain-plugin  # build a single plugin
+./build.sh                      # build all plugins under src/*-plugin (Release)
+./build.sh gain-plugin          # build a single plugin (Release)
+./build.sh gain-plugin debug    # build a single plugin (Debug)
+./build.sh debug                # build all plugins under src/*-plugin (Debug)
 ```
 
 ### Windows
 Requires Visual Studio 2019+ (or Build Tools) with the *Desktop development with C++* workload — CMake and Ninja are picked up from the VS install automatically.
 ```powershell
-.\build.ps1              # build all plugins under src/*-plugin
-.\build.ps1 gain-plugin  # build a single plugin
+.\build.ps1                    # build all plugins under src/*-plugin (Release)
+.\build.ps1 gain-plugin        # build a single plugin (Release)
+.\build.ps1 gain-plugin debug  # build a single plugin (Debug)
+.\build.ps1 debug              # build all plugins under src/*-plugin (Debug)
 ```
 The post-build step symlinks the bundle into `%LOCALAPPDATA%\Programs\Common\VST3`, so DAWs scanning the default user location pick it up.
